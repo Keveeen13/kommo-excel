@@ -42,7 +42,8 @@ async function fetchLeadsFromKommo() {
     });
 
     const leads = response.data._embedded?.leads || [];
-    console.log(`Leads encontrados na etapa ${STAGE_ID} do funil ${PIPELINE_ID}: ${leads.length}`);
+    console.log(`Leads recebidos: ${JSON.stringify(leads, null, 2)}`);
+    console.log(`Total de leads encontrados: ${leads.length}`);
     return leads;
   } catch (error) {
     console.error('Erro ao buscar leads do Kommo:', error.response?.data || error.message);
@@ -61,6 +62,8 @@ async function updateGoogleSheet(auth, leads) {
       : 'Sem Data',
   ]);
 
+  console.log(`Enviando dados para o Google Sheets: ${JSON.stringify(values, null, 2)}`);
+
   const request = {
     spreadsheetId: SPREADSHEET_ID,
     range: GOOGLE_SHEET_RANGE,
@@ -70,8 +73,8 @@ async function updateGoogleSheet(auth, leads) {
   };
 
   try {
-    await sheets.spreadsheets.values.update(request);
-    console.log('Google Sheets atualizado com os leads específicos.');
+    const response = await sheets.spreadsheets.values.update(request);
+    console.log('Google Sheets atualizado:', response.data);
   } catch (error) {
     console.error('Erro ao atualizar o Google Sheets:', error.message);
   }
