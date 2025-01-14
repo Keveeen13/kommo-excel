@@ -15,7 +15,7 @@ const KOMMO_SUBDOMAIN = process.env.KOMMO_SUBDOMAIN;
 
 // ID do Funil e da Etapa
 const PIPELINE_ID = 7808323; // Substitua pelo ID do funil específico
-const STAGE_ID = 78412656; // Substitua pelo ID da etapa específica
+const STAGE_ID = 79289360; // Substitua pelo ID da etapa específica
 
 // Configurações Google Sheets
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // ID da planilha
@@ -33,6 +33,9 @@ async function authenticateGoogle() {
 // Função para buscar leads do Kommo no funil e etapa específicos
 async function fetchLeadsFromKommo() {
   try {
+    console.log('Pipeline ID:', PIPELINE_ID);
+    console.log('Stage ID:', STAGE_ID);
+
     const response = await axios.get(`https://${KOMMO_SUBDOMAIN}.kommo.com/api/v4/leads`, {
       headers: { Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}` },
       params: {
@@ -41,8 +44,13 @@ async function fetchLeadsFromKommo() {
       },
     });
 
-    const leads = response.data._embedded?.leads || [];
-    console.log(`Leads recebidos: ${JSON.stringify(leads, null, 2)}`);
+    console.log('Resposta da API do Kommo:', JSON.stringify(response.data, null, 2));
+
+    // Filtrar leads da etapa e funil específicos
+    const leads = (response.data._embedded?.leads || []).filter(
+      (lead) => lead.pipeline_id === PIPELINE_ID && lead.status_id === STAGE_ID
+    );
+
     console.log(`Total de leads encontrados: ${leads.length}`);
     return leads;
   } catch (error) {
