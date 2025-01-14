@@ -36,7 +36,7 @@ async function fetchLeadsFromKommo() {
     console.log('Pipeline ID:', PIPELINE_ID);
     console.log('Stage ID:', STAGE_ID);
 
-    const response = await axios.get(`https://${KOMMO_SUBDOMAIN}.kommo.com/api/v4/leads`, {
+    const response = await axios.get(`https://instneurociencia.kommo.com/api/v4/leads/pipelines/7808323/statuses/79289360`, {
       headers: { Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}` },
       params: {
         pipeline_id: PIPELINE_ID,
@@ -81,8 +81,11 @@ async function updateGoogleSheet(auth, leads) {
   };
 
   try {
-    const response = await sheets.spreadsheets.values.update(request);
-    console.log('Google Sheets atualizado:', response.data);
+    const response = await sheets.spreadsheets.values.append({
+      ...request,
+      insertDataOption: 'INSERT_ROWS', // Inserir como novas linhas
+    });
+    console.log('Google Sheets atualizado com sucesso:', response.data);
   } catch (error) {
     console.error('Erro ao atualizar o Google Sheets:', error.message);
   }
@@ -98,12 +101,13 @@ app.post('/kommowebhook', async (req, res) => {
     const leads = await fetchLeadsFromKommo();
 
     if (leads.length > 0) {
+      // Atualizar o Google Sheets com os leads encontrados
       await updateGoogleSheet(auth, leads);
+      res.status(200).send('Google Sheets atualizado com sucesso.');
     } else {
       console.log('Nenhum lead encontrado para o funil e etapa especificados.');
+      res.status(200).send('Nenhum lead encontrado.');
     }
-
-    res.status(200).send('Google Sheets atualizado com sucesso.');
   } catch (error) {
     console.error('Erro ao processar webhook:', error.message);
     res.status(500).send('Erro ao processar webhook.');
