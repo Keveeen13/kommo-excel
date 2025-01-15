@@ -36,6 +36,7 @@ async function fetchLeadsFromKommo() {
     console.log('Pipeline ID:', PIPELINE_ID);
     console.log('Stage ID:', STAGE_ID);
 
+
     // Faz a requisição para buscar os leads
     const response = await axios.get(
       `https://${KOMMO_SUBDOMAIN}.kommo.com/api/v4/leads`, 
@@ -105,6 +106,7 @@ app.post('/kommowebhook', async (req, res) => {
     const leads = await fetchLeadsFromKommo();
 
     if (leads.length > 0) {
+
       // Atualizar Google Sheets
       await updateGoogleSheet(auth, leads);
       res.status(200).send('Google Sheets atualizado com sucesso.');
