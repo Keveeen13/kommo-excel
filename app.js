@@ -36,28 +36,34 @@ async function fetchLeadsFromKommo() {
     console.log('Pipeline ID:', PIPELINE_ID);
     console.log('Stage ID:', STAGE_ID);
 
-    const response = await axios.get(`https://instneurociencia.kommo.com/api/v4/leads/pipelines/7808323/statuses/79289360`, {
-      headers: { Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}` },
-      params: {
-        pipeline_id: PIPELINE_ID,
-        status_id: STAGE_ID,
-      },
-    });
+
+    // Faz a requisição para buscar os leads
+    const response = await axios.get(
+      `https://${KOMMO_SUBDOMAIN}.kommo.com/api/v4/leads`, 
+      {
+        headers: { Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}` },
+        params: {
+          pipeline_id: PIPELINE_ID, // Filtra pelo funil
+          status_id: STAGE_ID,     // Filtra pela etapa
+        },
+      }
+    );
 
     console.log('Resposta da API do Kommo:', JSON.stringify(response.data, null, 2));
 
-    // Filtrar leads da etapa e funil específicos
+    // Filtra os leads que correspondem exatamente ao funil e à etapa
     const leads = (response.data._embedded?.leads || []).filter(
       (lead) => lead.pipeline_id === PIPELINE_ID && lead.status_id === STAGE_ID
     );
 
-    console.log(`Total de leads encontrados: ${leads.length}`);
+    console.log(`Total de leads encontrados na etapa ${STAGE_ID}: ${leads.length}`);
     return leads;
   } catch (error) {
     console.error('Erro ao buscar leads do Kommo:', error.response?.data || error.message);
     return [];
   }
 }
+
 
 // Função para enviar dados ao Google Sheets
 async function updateGoogleSheet(auth, leads) {
@@ -81,10 +87,7 @@ async function updateGoogleSheet(auth, leads) {
   };
 
   try {
-    const response = await sheets.spreadsheets.values.append({
-      ...request,
-      insertDataOption: 'INSERT_ROWS', // Inserir como novas linhas
-    });
+    const response = await sheets.spreadsheets.values.update(request);
     console.log('Google Sheets atualizado com sucesso:', response.data);
   } catch (error) {
     console.error('Erro ao atualizar o Google Sheets:', error.message);
@@ -96,12 +99,15 @@ app.post('/kommowebhook', async (req, res) => {
   try {
     console.log('Notificação recebida do Kommo:', req.body);
 
-    // Buscar leads e enviar ao Google Sheets
+    // Autenticar no Google
     const auth = await authenticateGoogle();
+
+    // Buscar leads do Kommo
     const leads = await fetchLeadsFromKommo();
 
     if (leads.length > 0) {
-      // Atualizar o Google Sheets com os leads encontrados
+
+      // Atualizar Google Sheets
       await updateGoogleSheet(auth, leads);
       res.status(200).send('Google Sheets atualizado com sucesso.');
     } else {
