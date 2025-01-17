@@ -5,5 +5,12 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "googleapis": "^144.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "scripts": {
+    "start": "node teste1.js",
+    "dev": "nodemon teste1.js"
   }
 }
