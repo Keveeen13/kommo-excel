@@ -73,26 +73,14 @@ async function getLeadDetails(leadId) {
 
 // Função para extrair o número de telefone
 function extractPhoneNumber(contact) {
-  // Verifique se há um campo de telefone padrão no contato
-  if (contact.phones && contact.phones.length > 0) {
-    const workPhone = contact.phones.find((phone) => phone.type === 'WORK');
-    if (workPhone) {
-      return workPhone.number || "Campo do telefone não encontrado!";
-    }
-  }
-
-  // Caso não encontre no campo de telefone, verifica campos personalizados
   const customFields = contact.custom_fields_values || [];
-  const phoneField = customFields.find((field) => field.field_name === "Phone");
-
+  const phoneField = customFields.find((field) => field.field_code === "PHONE");
   if (phoneField) {
-    const phoneValue = phoneField.values?.find((value) => value.enum_code === "WORK");
+    const phoneValue = phoneField.values.find((value) => value.enum_code === "WORK");
     return phoneValue?.value || "Telefone não encontrado!";
   }
-
   return "Telefone não encontrado!";
 }
-
 
 // Rota para receber os dados do webhook
 app.post("/kommowebhook", async (req, res) => {
@@ -100,38 +88,41 @@ app.post("/kommowebhook", async (req, res) => {
     console.log("Cabeçalhos da requisição:", req.headers);
     console.log("Payload recebido:", JSON.stringify(req.body, null, 2));
 
-    // Verifique se leads foram enviados
     const leadsArray = req.body.leads?.add;
     if (!leadsArray || leadsArray.length === 0) {
       console.error("Nenhum lead recebido!");
       return res.status(400).send("Nenhum lead recebido.");
     }
 
-    // Substitua pelos IDs do funil e etapa desejados
     const TARGET_PIPELINE_ID = "7808323";
     const TARGET_STAGE_ID = "79289360";
 
     for (const lead of leadsArray) {
-      const id = lead.id;
-      const name = lead.name;
-      const price = lead.price || "sem valor"; // Preencher com 0 caso não tenha preço
-      const pipeline_id = lead.pipeline_id;
-      const status_id = lead.status_id;
-      const created_at = lead.created_at;
+      const { id, name, price = "sem valor", pipeline_id, status_id, created_at } = lead;
 
-      // Filtrar leads pelo funil e etapa específicos
       if (pipeline_id === TARGET_PIPELINE_ID && status_id === TARGET_STAGE_ID) {
         if (processedLeads.has(id)) {
           console.log(`Lead ${id} já processado.`);
-          continue; // Ignorar leads já processados
+          continue;
         }
 
         processedLeads.add(id);
 
-        // Buscar detalhes do lead e contato
         const leadDetails = await getLeadDetails(id);
-        const contact = leadDetails?._embedded?.contacts?.[0]; // Busca o primeiro contato associado
-        const phone = contact ? extractPhoneNumber(contact) : "Contato não encontrado";
+
+        const contact = leadDetails?._embedded?.contacts?.[0];
+        let phone = "Contato não encontrado";
+
+        if (contact) {
+          const contactId = contact.id;
+          const contactDetailsResponse = await axios.get(
+            `${KOMMO_API_URL}/api/v4/contacts/${contactId}`,
+            { headers: { Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}` } }
+          );
+
+          const contactDetails = contactDetailsResponse.data;
+          phone = extractPhoneNumber(contactDetails);
+        }
 
         const leadData = {
           id,
@@ -142,8 +133,6 @@ app.post("/kommowebhook", async (req, res) => {
         };
 
         console.log("Dados para planilha:", leadData);
-
-        // Adiciona os dados na planilha
         await appendToSheet(leadData);
       } else {
         console.log(`Lead ${id} ignorado (pipeline ou status diferente).`);
