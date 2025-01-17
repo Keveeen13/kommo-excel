@@ -1,54 +1,32 @@
 const axios = require("axios");
 
-const KOMMO_ACCESS_TOKEN = process.env.KOMMO_ACCESS_TOKEN;
-const KOMMO_SUBDOMAIN = process.env.KOMMO_SUBDOMAIN;
-const LEAD_ID = process.env.LEAD_ID;
-// Função para buscar detalhes do lead e obter o telefone associado
-async function getLeadDetails(leadId, subdomain, token) {
+async function getCustomFields(subdomain, token) {
   try {
     const response = await axios.get(
-      `https://${KOMMO_SUBDOMAIN}.amocrm.com/api/v4/leads/${LEAD_ID}?with=contacts`,
+      `https://${subdomain}.amocrm.com/api/v4/contacts/custom_fields`,
       {
         headers: {
-          Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}`, // Substitua pelo token de acesso válido
+          Authorization: `Bearer ${token}`,
         },
       }
     );
 
-    const lead = response.data;
+    const customFields = response.data._embedded.custom_fields;
 
-    // Obter contatos associados ao lead
-    const contact = lead._embedded?.contacts?.[0];
-    if (contact) {
-      const contactId = contact.id;
+    console.log("Lista de campos personalizados:");
+    customFields.forEach((field) => {
+      console.log(`ID: ${field.id}, Nome: ${field.name}`);
+    });
 
-      // Buscar dados do contato
-      const contactResponse = await axios.get(
-        `https://${KOMMO_SUBDOMAIN}.amocrm.com/api/v4/contacts/${contactId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}`,
-          },
-        }
-      );
-
-      const contactDetails = contactResponse.data;
-      const phoneField = contactDetails.custom_fields_values?.find(
-        (field) => field.field_name === "Tel. comercial"
-      );
-
-      const phone = phoneField?.values?.[0]?.value || "Não informado";
-      return phone;
-    }
-
-    return "Não informado";
+    // Retornar a lista de campos personalizados
+    return customFields;
   } catch (error) {
-    console.error("Erro ao buscar detalhes do lead:", error.message);
-    return "Erro ao buscar telefone";
+    console.error("Erro ao buscar os campos personalizados:", error.message);
   }
 }
 
-// Exportar a função para uso em outros arquivos
-module.exports = {
-  getLeadDetails,
-};
+// Substitua pelos valores corretos
+const SUBDOMAIN = "instneurociencia"; // Subdomínio da sua conta
+const API_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImZlYThiN2Y4Y2UwYzE4ZmY2Mjc5YTM3ZDBiYTNkNWEzY2E3NWJhNTkwZDk0ZjJmYzRmYzYzZTlhYjAwYjU5NzQ3ZTU1ZTlhYzJkYjRkZWZhIn0.eyJhdWQiOiI5YWE3YjQ5NC05ZGMwLTQ0ODctOTViNC02MzY0MGRiZWY2NDUiLCJqdGkiOiJmZWE4YjdmOGNlMGMxOGZmNjI3OWEzN2QwYmEzZDVhM2NhNzViYTU5MGQ5NGYyZmM0ZmM2M2U5YWIwMGI1OTc0N2U1NWU5YWMyZGI0ZGVmYSIsImlhdCI6MTczNDcyMzAyMiwibmJmIjoxNzM0NzIzMDIyLCJleHAiOjE4OTI0MTkyMDAsInN1YiI6Ijc1MzY5NjgiLCJncmFudF90eXBlIjoiIiwiYWNjb3VudF9pZCI6MzIwNjUyOTEsImJhc2VfZG9tYWluIjoia29tbW8uY29tIiwidmVyc2lvbiI6Miwic2NvcGVzIjpbImNybSIsImZpbGVzIiwiZmlsZXNfZGVsZXRlIiwibm90aWZpY2F0aW9ucyIsInB1c2hfbm90aWZpY2F0aW9ucyJdLCJoYXNoX3V1aWQiOiIzYzA2OTQ2Mi0zNDkwLTRlODktYmU5MC01MjQ0ZjA5Y2QyNGQiLCJhcGlfZG9tYWluIjoiYXBpLWcua29tbW8uY29tIn0.Wv-FmVj61UQ_kB537xpBPfd7SzLYWSTbG1OelIUuMIXQExCmwfDsjiGbN8wtv_jPoYCpBhLk6IrkJocSM400dyAsjvrtQ2Re6pPQoDP9NzjblmRZfioJka_wMFrJm3gQtSpbxWo0QzHfYxopRVFADEBVZicPOXhaxaBuFv2jHCpLvgS983mpuq2Rc9MAxItJNWWQZHsc7IO7Si_IMlRJZ0JxokbYUlPRDjUtkheStgK2R9Z57-fLz-ywprQG5BmQqHPPVL6RLgaiHpK23RYSm3rshxgMyD79HbAi8ULt4Rykftk7cdBCmwuSSHn6REPwB-F7YJk_XoAMETYlYy_0Gg"; // Token de acesso à API do Kommo
+
+getCustomFields(SUBDOMAIN, API_TOKEN);
