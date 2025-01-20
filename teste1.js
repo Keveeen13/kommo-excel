@@ -114,12 +114,13 @@ app.post("/kommowebhook", async (req, res) => {
 
     const TARGET_PIPELINE_ID = "7808323";
     const TARGET_STAGE_ID = "79289360";
+    const TARGET_STATUS_ID = "79289360";
 
     for (const lead of allLeads) {
       const { id, name, price = "sem valor", pipeline_id, status_id, created_at, updated_at } = lead;
 
       // Verificar se o lead está no pipeline e estágio desejado
-      if (pipeline_id === TARGET_PIPELINE_ID && status_id === TARGET_STAGE_ID) {
+      if (pipeline_id === TARGET_PIPELINE_ID && TARGET_STATUS_ID === TARGET_STAGE_ID) {
         if (processedLeads.has(id)) {
           console.log(`Lead ${id} já processado.`);
           continue;
