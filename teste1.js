@@ -111,10 +111,10 @@ app.post("/kommowebhook", async (req, res) => {
       console.error("Nenhum lead recebido!");
       return res.status(400).send("Nenhum lead recebido.");
     }
-
-    const TARGET_PIPELINE_ID = "7808323";
-    const TARGET_STAGE_ID = "79289360";
-    const TARGET_STATUS_ID = "79289360";
+    // IDs do funil e da etapa
+    const TARGET_PIPELINE_ID = "7808323"; // ID do funil
+    const TARGET_STAGE_ID = "79289360"; // ID da etapa
+    const TARGET_STATUS_ID = "79289360"; // ID da etapa
 
     for (const lead of allLeads) {
       const { id, name, price = "sem valor", pipeline_id, status_id, created_at, updated_at } = lead;
