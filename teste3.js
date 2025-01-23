@@ -14,8 +14,8 @@ const CREDENTIALS_PATH = path.join(__dirname, "kommo-integration-445219-6d9f443e
 const SPREADSHEET_ID = "1DUDR6hxit1mbTlUYA50qgN2zk_lL0YfPjfcbQ-nxtcU"; // Substitua pelo ID da sua planilha
 const TARGET_PIPELINE_ID = "7808323"; // ID do funil
 const TARGET_STAGE_ID = "79289360"; // ID da etapa
-const PHONE_FIELD_ID = 638908; // ID do campo personalizado "Telefone"
-const WORK_ENUM_ID = 491686; // ID do enum "WORK"
+const PHONE_FIELD_ID = "638908"; // ID do campo personalizado "Telefone"
+const WORK_ENUM_ID = "491686"; // ID do enum "WORK"
 
 // Conjunto para armazenar IDs de leads processados
 const processedLeads = new Set();
@@ -61,114 +61,12 @@ async function appendToSheet(data) {
   }
 }
 
-/**
- * Busca detalhes de um lead na API do Kommo
- * @param {number} leadId ID do lead
- */
-async function getLeadDetails(leadId) {
-  try {
-    const response = await axios.get(`${KOMMO_API_URL}/api/v4/leads/${leadId}`, {
-      headers: { Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}` },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Erro ao buscar detalhes do lead:", error.message);
-    return null;
+async function getLeadsJson() {
+  const options = {
+    methot: 'GET',
+    url: `https://instneurociencia.kommo.com/api/v4/leads/${KOMMO_API_URL}`,
   }
 }
-
-/**
- * Busca detalhes de um contato na API do Kommo
- * @param {number} contactId ID do contato
- */
-async function getContactDetails(contactId) {
-  try {
-    const response = await axios.get(`${KOMMO_API_URL}/api/v4/contacts/${contactId}`, {
-      headers: { Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}` },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Erro ao buscar detalhes do contato:", error.message);
-    return null;
-  }
-}
-
-/**
- * Extrai o número de telefone de um contato
- * @param {Object} contact Objeto de contato
- */
-function extractPhoneNumber(contact) {
-  const customFields = contact.custom_fields_values || [];
-  const phoneField = customFields.find((field) => field.field_id === PHONE_FIELD_ID);
-
-  if (phoneField) {
-    const phoneValue = phoneField.values.find((value) => value.enum_id === WORK_ENUM_ID);
-    return phoneValue?.value || "Telefone não encontrado.";
-  }
-
-  return "Telefone não encontrado.";
-}
-
-// Rota principal
-
-/**
- * Processa os dados recebidos do webhook do Kommo
- */
-app.post("/kommowebhook", async (req, res) => {
-  try {
-    console.log("Payload recebido:", JSON.stringify(req.body, null, 2));
-
-    const leadsArray = req.body.leads?.add || [];
-    const updatedLeadsArray = req.body.leads?.update || [];
-    const allLeads = [...leadsArray, ...updatedLeadsArray];
-
-    if (allLeads.length === 0) {
-      console.error("Nenhum lead recebido!");
-      return res.status(400).send("Nenhum lead recebido.");
-    }
-
-    for (const lead of allLeads) {
-      const { id, name, price = "sem valor", pipeline_id, status_id, updated_at } = lead;
-
-      // Verifica se o lead está no pipeline e estágio desejado
-      if (pipeline_id === TARGET_PIPELINE_ID && status_id === TARGET_STAGE_ID) {
-        if (processedLeads.has(id)) {
-          console.log(`Lead ${id} já processado.`);
-          continue;
-        }
-
-        processedLeads.add(id);
-
-        const leadDetails = await getLeadDetails(id);
-        const contact = leadDetails?._embedded?.contacts?.[0];
-        let phone = "Contato não encontrado";
-
-        if (contact) {
-          const contactDetails = await getContactDetails(contact.id);
-          phone = extractPhoneNumber(contactDetails);
-        }
-
-        const leadData = {
-          id,
-          name,
-          phone,
-          price,
-          date: new Date(updated_at * 1000).toISOString().split("T")[0],
-        };
-
-        console.log("Dados para planilha:", leadData);
-        await appendToSheet(leadData);
-      } else {
-        console.log(`Lead ${id} ignorado (pipeline ou status diferente).`);
-      }
-    }
-
-    res.status(200).send("Webhook recebido com sucesso!");
-  } catch (error) {
-    console.error("Erro no webhook:", error);
-    res.status(500).send("Erro no processamento do webhook.");
-  }
-});
 
 // Inicia o servidor
 app.listen(PORT, () => {
