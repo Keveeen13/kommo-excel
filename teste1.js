@@ -58,12 +58,15 @@ async function appendToSheet(data) {
 async function getLeadDetails(leadId) {
   try {
     const response = await axios.get(`${KOMMO_API_URL}/api/v4/leads/${leadId}`, {
+      params: {
+        with: 'contacts'
+      },
       headers: {
         Authorization: `Bearer ${KOMMO_ACCESS_TOKEN}`,
       },
     });
 
-    console.log("Detalhes do lead:", response.data);
+    console.log("Detalhes do lead:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
     console.error("Erro ao buscar detalhes do lead:", error.message);
