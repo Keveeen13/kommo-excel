@@ -18,9 +18,11 @@ const processedLeads = new Set();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Caminho para o arquivo de credenciais da conta de serviço do Google
+// Caminho do o arquivo de credenciais da conta de serviço do Google
 const CREDENTIALS_PATH = path.join(__dirname, "kommo-integration-445219-6d9f443e8383.json");
-const SPREADSHEET_ID = "1DUDR6hxit1mbTlUYA50qgN2zk_lL0YfPjfcbQ-nxtcU"; // Substitua pelo ID da sua planilha do Google
+
+// ID da planilha do Google
+const SPREADSHEET_ID = "1DUDR6hxit1mbTlUYA50qgN2zk_lL0YfPjfcbQ-nxtcU";
 
 // Função para autenticar com a API do Google
 async function authenticateGoogle() {
@@ -115,8 +117,8 @@ app.post("/kommowebhook", async (req, res) => {
       return res.status(400).send("Nenhum lead recebido.");
     }
     // IDs do funil e da etapa
-    const TARGET_PIPELINE_ID = "7808323"; // ID do funil
-    const TARGET_STAGE_ID = "79289360"; // ID da etapa
+    const TARGET_PIPELINE_ID = "7808323"; // ID do funil "Neurofeedback"
+    const TARGET_STAGE_ID = "79289360"; // ID da etapa "teste funil"
 
     for (const lead of allLeads) {
       const { id, name, price = "sem valor", pipeline_id, status_id, created_at, updated_at } = lead;
