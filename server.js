@@ -19,7 +19,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Caminho do o arquivo de credenciais da conta de serviço do Google
-const CREDENTIALS_PATH = path.join(__dirname, "kommo-integration-445219-6d9f443e8383.json");
+const CREDENTIALS_PATH = path.join(__dirname, process.GOOGLE_KEY_FILE);
 
 // ID da planilha do Google
 const SPREADSHEET_ID = process.SPREADSHEET_ID;
@@ -45,7 +45,7 @@ async function appendToSheet(data) {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: "Página1!A:E", // Substitua "Página1" pelo nome da aba da planilha
+      range: "Página1!A:E", // Nome da página da planilha
       valueInputOption: "RAW",
       resource,
     });
@@ -76,10 +76,6 @@ async function getLeadDetails(leadId) {
   }
 }
 
-// IDs do campo "Telefone" e do enum "WORK"
-const PHONE_FIELD_ID = 638908; // ID do campo personalizado "Telefone"
-const WORK_ENUM_ID = 491686; // ID do enum "WORK"
-
 // Função para extrair o número de telefone
 function extractPhoneNumber(contact) {
   // Verificar se o contato possui campos personalizados
@@ -89,12 +85,12 @@ function extractPhoneNumber(contact) {
   console.log("Custom Fields:", JSON.stringify(customFields, null, 2));
 
   // Procurar pelo campo de telefone com o enum_id "WORK"
-  const phoneField = customFields.find((field) => field.field_id === PHONE_FIELD_ID); // Verifique o ID do campo
+  const phoneField = customFields.find((field) => field.field_id === process.PHONE_FIELD_ID); // Verifique o ID do campo
 
   if (phoneField) {
     console.log("Phone Field:", JSON.stringify(phoneField, null, 2)); // Logar o campo de telefone encontrado
     // Procurar pelo valor dentro do campo, com enum_id "WORK"
-    const phoneValue = phoneField.values.find((value) => value.enum_id === WORK_ENUM_ID);
+    const phoneValue = phoneField.values.find((value) => value.enum_id === process.WORK_ENUM_ID);
     return phoneValue?.value || "Telefone não encontrado.";  // Retorna o número de telefone ou mensagem padrão
   }
 
@@ -116,15 +112,12 @@ app.post("/kommowebhook", async (req, res) => {
       console.error("Nenhum lead recebido!");
       return res.status(400).send("Nenhum lead recebido.");
     }
-    // IDs do funil e da etapa
-    const TARGET_PIPELINE_ID = "7808323"; // ID do funil "Neurofeedback"
-    const TARGET_STAGE_ID = "79289360"; // ID da etapa "teste funil"
 
     for (const lead of allLeads) {
       const { id, name, price = "sem valor", pipeline_id, status_id, created_at, updated_at } = lead;
 
       // Verificar se o lead está no pipeline e estágio desejado
-      if (pipeline_id === TARGET_PIPELINE_ID && status_id === TARGET_STAGE_ID) {
+      if (pipeline_id === process.TARGET_PIPELINE_ID && status_id === process.TARGET_STAGE_ID) {
         if (processedLeads.has(id)) {
           console.log(`Lead ${id} já processado.`);
           continue;
