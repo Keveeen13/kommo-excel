@@ -164,7 +164,7 @@ app.post("/kommowebhook", async (req, res) => {
   }
 });
 
-// Inicia o servidor
+// Inicia o servidor na porta 3333
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
