@@ -8,13 +8,13 @@ const app = express();
 const PORT = 3333;
 
 // Configurações do Kommo
-const KOMMO_API_URL = process.KOMMO_BASE_URL; // Substitua pelo seu subdomínio
-const KOMMO_ACCESS_TOKEN = process.KOMMO_ACCESS_TOKEN; // Adicione o token de acesso da API do Kommo
+const KOMMO_API_URL = process.KOMMO_BASE_URL; // URL e subdominio da Kommo
+const KOMMO_ACCESS_TOKEN = process.KOMMO_ACCESS_TOKEN; // Token de acesso da API do Kommo
 
-// Definir um conjunto para armazenar IDs de leads processados
+// Serve para definir um conjunto para armazenar IDs de leads processados
 const processedLeads = new Set();
 
-// Configuração do parser para JSON e x-www-form-urlencoded
+// Configuração do parser para JSON e x-www-form-urlencoded para aceitar playloads em JSON
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -45,7 +45,7 @@ async function appendToSheet(data) {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: "Página1!A:E", // Nome da página da planilha
+      range: "Página1!A:E", // Nome da página e limitação de colunas da planilha
       valueInputOption: "RAW",
       resource,
     });
